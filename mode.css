@@ -1,0 +1,29 @@
+body {
+  background-color: #1a152b;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-family: sans-serif;
+}
+
+.mode-screen {
+  text-align: center;
+}
+
+button {
+  margin: 10px;
+  padding: 12px 20px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background-color: #a471f1;
+  color: white;
+  transition: 0.3s ease;
+}
+
+button:hover {
+  background-color: #c298ff;
+}

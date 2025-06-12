@@ -1,103 +1,115 @@
-const board = document.getElementById('board');
+const boardElement = document.getElementById('board');
 const statusText = document.getElementById('status');
-const winLine = document.getElementById('win-line');
+const canvas = document.getElementById('winLine');
+const ctx = canvas.getContext('2d');
 
-let cells = Array(9).fill('');
+let board = Array(9).fill('');
 let currentPlayer = 'X';
-let gameActive = true;
+let gameMode = localStorage.getItem('gameMode') || 'multi';
+let gameOver = false;
 
-const winningCombinations = [
-  [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-  [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
-  [0, 4, 8], [2, 4, 6]             // diagonals
+canvas.width = 300;
+canvas.height = 300;
+
+const winningCombos = [
+  [0, 1, 2], [3, 4, 5], [6, 7, 8],
+  [0, 3, 6], [1, 4, 7], [2, 5, 8],
+  [0, 4, 8], [2, 4, 6]
 ];
 
 function drawBoard() {
-  board.innerHTML = '';
-  cells.forEach((value, index) => {
+  boardElement.innerHTML = '';
+  board.forEach((val, i) => {
     const cell = document.createElement('div');
-    cell.className = 'cell';
-    cell.textContent = value;
-    cell.addEventListener('click', () => handleClick(index));
-    board.appendChild(cell);
+    cell.classList.add('cell');
+    cell.textContent = val;
+    cell.addEventListener('click', () => handleMove(i));
+    boardElement.appendChild(cell);
   });
+  updateStatus();
 }
 
-function handleClick(index) {
-  if (!gameActive || cells[index] !== '') return;
-  cells[index] = currentPlayer;
+function handleMove(index) {
+  if (board[index] || gameOver) return;
+  board[index] = currentPlayer;
   drawBoard();
-  checkWinner();
+  if (checkWin(currentPlayer)) {
+    statusText.textContent = `Player ${currentPlayer} wins!`;
+    gameOver = true;
+    drawWinLine(checkWin(currentPlayer));
+    return;
+  } else if (board.every(cell => cell)) {
+    statusText.textContent = 'It\'s a draw!';
+    return;
+  }
+  currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+  updateStatus();
 
-  if (gameActive) {
-    currentPlayer = 'O';
-    statusText.textContent = `AI's turn...`;
+  if (gameMode === 'ai' && currentPlayer === 'O' && !gameOver) {
     setTimeout(aiMove, 500);
   }
 }
 
 function aiMove() {
-  if (!gameActive) return;
-  let emptyIndices = cells.map((v, i) => v === '' ? i : null).filter(i => i !== null);
-
-  // Simple AI: win, block, or random
-  let move = findBestMove('O') || findBestMove('X') || emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-  cells[move] = 'O';
-  drawBoard();
-  checkWinner();
-  if (gameActive) {
-    currentPlayer = 'X';
-    statusText.textContent = `Player X's turn`;
-  }
+  let empty = board.map((v, i) => v === '' ? i : null).filter(v => v !== null);
+  let choice = empty[Math.floor(Math.random() * empty.length)];
+  handleMove(choice);
 }
 
-function findBestMove(player) {
-  for (let combo of winningCombinations) {
-    const [a, b, c] = combo;
-    const values = [cells[a], cells[b], cells[c]];
-    if (values.filter(v => v === player).length === 2 && values.includes('')) {
-      return combo[values.indexOf('')];
-    }
+function checkWin(player) {
+  for (let combo of winningCombos) {
+    if (combo.every(i => board[i] === player)) return combo;
   }
   return null;
 }
 
-function checkWinner() {
-  for (let [a, b, c] of winningCombinations) {
-    if (cells[a] && cells[a] === cells[b] && cells[a] === cells[c]) {
-      statusText.textContent = `Player ${cells[a]} wins! 🎉`;
-      gameActive = false;
-      drawWinLine(a, c);
-      return;
-    }
+function drawWinLine(combo) {
+  const getCenter = (index) => {
+    const row = Math.floor(index / 3);
+    const col = index % 3;
+    const cellSize = 100;
+    const offset = 50; // center of the cell
+    return { x: col * cellSize + offset, y: row * cellSize + offset };
+  };
+
+  const [start, , end] = combo.map(getCenter);
+
+  ctx.strokeStyle = '#ff69b4';
+  ctx.lineWidth = 5;
+
+  let progress = 0;
+
+  function animate() {
+    progress += 0.02;
+    if (progress > 1) return;
+
+    const currentX = start.x + (end.x - start.x) * progress;
+    const currentY = start.y + (end.y - start.y) * progress;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(currentX, currentY);
+    ctx.stroke();
+
+    requestAnimationFrame(animate);
   }
 
-  if (!cells.includes('')) {
-    statusText.textContent = `It's a draw! 🤝`;
-    gameActive = false;
-  }
+  animate();
 }
 
+
+
 function resetGame() {
-  cells = Array(9).fill('');
+  board = Array(9).fill('');
   currentPlayer = 'X';
-  gameActive = true;
-  statusText.textContent = `Player X's turn`;
-  winLine.innerHTML = '';
+  gameOver = false;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawBoard();
 }
 
-function drawWinLine(startIndex, endIndex) {
-  const positions = [
-    [50, 50], [155, 50], [260, 50],
-    [50, 155], [155, 155], [260, 155],
-    [50, 260], [155, 260], [260, 260]
-  ];
-
-  const [x1, y1] = positions[startIndex];
-  const [x2, y2] = positions[endIndex];
-
-  winLine.innerHTML = `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" />`;
+function updateStatus() {
+  statusText.textContent = gameOver ? '' : `Player ${currentPlayer}'s turn`;
 }
 
 drawBoard();
