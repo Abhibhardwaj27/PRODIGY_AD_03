@@ -11,11 +11,18 @@ body {
 
 .game-container {
   text-align: center;
+  position: relative;
 }
 
 h1 {
-  margin-bottom: 20px;
   color: #ffccff;
+  margin-bottom: 20px;
+}
+
+.board-wrapper {
+  position: relative;
+  width: 310px;
+  height: 310px;
 }
 
 .board {
@@ -23,7 +30,6 @@ h1 {
   grid-template-columns: repeat(3, 100px);
   grid-template-rows: repeat(3, 100px);
   gap: 5px;
-  margin-bottom: 15px;
 }
 
 .cell {
@@ -42,7 +48,7 @@ h1 {
 }
 
 .info {
-  margin-top: 10px;
+  margin-top: 20px;
 }
 
 button {
@@ -58,4 +64,28 @@ button {
 
 button:hover {
   background-color: #ff3399;
+}
+
+.win-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 310px;
+  height: 310px;
+  pointer-events: none;
+}
+
+.win-line line {
+  stroke: #fff;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 100%;
+  stroke-dashoffset: 100%;
+  animation: draw-line 1s ease-out forwards;
+}
+
+@keyframes draw-line {
+  to {
+    stroke-dashoffset: 0;
+  }
 }
